@@ -1,0 +1,4 @@
+# Development-only dependencies (not bundled into the installer).
+
+pytest>=7.0,<9
+pyinstaller>=6.0,<7

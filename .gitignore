@@ -1,0 +1,82 @@
+# ──────────────────────────────────────────────
+# OS / IDE
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ──────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg
+*.egg-info/
+dist/
+build/dist/
+build/build/
+*.spec.bak
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ──────────────────────────────────────────────
+# PyInstaller output (build/*.spec is committed,
+# but the produced binaries should not be)
+# ──────────────────────────────────────────────
+/dist/
+/build/dist/
+*.exe.manifest
+
+# ──────────────────────────────────────────────
+# Node / JS (legacy test scripts only)
+# ──────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ──────────────────────────────────────────────
+# Application data
+# ──────────────────────────────────────────────
+*.log
+logs/
+.gujarati_converter/
+
+# ──────────────────────────────────────────────
+# Examples — PRIVATE LEGAL DOCUMENTS
+# These are real affidavits/agreements with personal data
+# (names, addresses, ID numbers). DO NOT COMMIT.
+# Public samples can be added to examples/public-*.txt
+# ──────────────────────────────────────────────
+examples/example-*.txt
+
+# ──────────────────────────────────────────────
+# Test fixtures with potentially private content
+# ──────────────────────────────────────────────
+tests/fixtures/*.pdf
+tests/fixtures/*.png
+tests/fixtures/*.jpg
+tests/fixtures/*.jpeg
+tests/fixtures/*.tiff
+!tests/fixtures/.gitkeep
+!tests/fixtures/sample-public.*
+
+# ──────────────────────────────────────────────
+# Plan / scratch files
+# ──────────────────────────────────────────────
+.claude/
+new-plan.md
+NEXT_PROMPT.md

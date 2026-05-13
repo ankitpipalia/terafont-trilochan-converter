@@ -1,0 +1,32 @@
+# Normalize line endings across platforms
+* text=auto eol=lf
+
+# Force LF on text files
+*.py text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.spec text eol=lf
+Dockerfile text eol=lf
+
+# CRLF on Windows-specific files (Inno Setup, batch scripts)
+*.iss text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary
+*.ttf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.exe binary

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="gu" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online Gujarati font converter. Convert between Unicode and TeraFont Trilochan instantly. No word limit, no signup, works offline.">
+    <meta name="keywords" content="Gujarati, font converter, TeraFont, Trilochan, Unicode, Shruti, Gujarati typing">
+    <meta name="author" content="Gujarati Font Converter">
+    <meta name="theme-color" content="#0f0f1a">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Gujarati Font Converter — Unicode ↔ TeraFont Trilochan">
+    <meta property="og:description" content="Free online Gujarati font converter. Convert between Unicode and TeraFont Trilochan instantly.">
+    <meta property="og:type" content="website">
+
+    <title>Gujarati Font Converter | Unicode ↔ TeraFont Trilochan</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Favicon (inline SVG, the Gujarati letter ga) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90' font-family='serif'%3E%E0%AA%97%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+    <!-- Animated background -->
+    <div class="background-animation" aria-hidden="true">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <div class="container">
+        <!-- ─── Header ─── -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon" aria-hidden="true">ગ</span>
+                <div class="logo-text">
+                    <h1>Gujarati Font Converter</h1>
+                    <p class="tagline">Unicode ↔ TeraFont Trilochan</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" class="icon-btn" title="Toggle theme (Ctrl+/)" aria-label="Toggle theme">
+                    <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <button id="shortcutsBtn" class="icon-btn" title="Keyboard shortcuts (?)" aria-label="Show shortcuts">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- ─── Toolbar ─── -->
+        <nav class="toolbar" aria-label="Main toolbar">
+            <div class="conversion-mode" role="tablist">
+                <button id="modeUnicodeToTera" class="mode-btn active" role="tab" aria-selected="true">
+                    <span class="mode-label">Unicode → TeraFont</span>
+                </button>
+                <button id="modeTeraToUnicode" class="mode-btn" role="tab" aria-selected="false">
+                    <span class="mode-label">TeraFont → Unicode</span>
+                </button>
+                <button id="modeAuto" class="mode-btn auto-btn" role="tab" aria-selected="false" title="Auto-detect input type">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                    </svg>
+                    Auto
+                </button>
+            </div>
+
+            <div class="toolbar-actions">
+                <button id="uploadBtn" class="tool-btn" title="Upload .txt file (Ctrl+O)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    <span>Upload</span>
+                </button>
+                <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
+
+                <button id="loadSampleBtn" class="tool-btn" title="Load sample text">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Sample</span>
+                </button>
+
+                <button id="ocrImageBtn" class="tool-btn" title="OCR from image (Ctrl+I)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    <span>OCR Image</span>
+                </button>
+
+                <button id="ocrPdfBtn" class="tool-btn" title="OCR from PDF">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                    <span>OCR PDF</span>
+                </button>
+
+                <button id="previewBtn" class="tool-btn" title="Toggle side-by-side preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
+                    <span>Preview</span>
+                </button>
+
+                <button id="findReplaceBtn" class="tool-btn" title="Find & Replace (Ctrl+F)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Find</span>
+                </button>
+
+                <button id="printBtn" class="tool-btn" title="Print (Ctrl+P)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Print</span>
+                </button>
+
+                <button id="downloadTxtBtn" class="tool-btn primary" title="Download output as .txt (Ctrl+S)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    <span>Download</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- ─── Find & Replace bar (hidden by default) ─── -->
+        <div id="findReplaceBar" class="find-replace-bar" hidden>
+            <input type="text" id="findInput" placeholder="Find in input…" class="fr-input">
+            <input type="text" id="replaceInput" placeholder="Replace with…" class="fr-input">
+            <button id="findNextBtn" class="tool-btn small">Find</button>
+            <button id="replaceOneBtn" class="tool-btn small">Replace</button>
+            <button id="replaceAllBtn" class="tool-btn small primary">Replace All</button>
+            <button id="closeFindBtn" class="icon-btn small" aria-label="Close find">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- ─── Main converter card ─── -->
+        <main class="converter-card">
+            <div class="text-areas">
+                <!-- Input panel -->
+                <div class="text-panel input-panel" id="inputPanel">
+                    <div class="panel-header">
+                        <label for="inputText">
+                            <span class="panel-icon">📝</span>
+                            <span id="inputLabel">Unicode Gujarati Text</span>
+                        </label>
+                        <div class="panel-actions">
+                            <button id="pasteBtn" class="icon-btn small" title="Paste from clipboard">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                            </button>
+                            <button id="clearInput" class="icon-btn small" title="Clear (Esc)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="inputText" placeholder="Type, paste, or drop a .txt file here…" spellcheck="false" autocomplete="off"></textarea>
+                    <div class="drop-overlay">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                        <p>Drop file to load</p>
+                    </div>
+                </div>
+
+                <!-- Center action button -->
+                <button id="convertBtn" class="convert-btn" title="Convert (Ctrl+Enter)">
+                    <span class="btn-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </span>
+                    <span class="btn-text">Convert</span>
+                </button>
+
+                <!-- Output panel -->
+                <div class="text-panel output-panel">
+                    <div class="panel-header">
+                        <label for="outputText">
+                            <span class="panel-icon">✨</span>
+                            <span id="outputLabel">TeraFont Trilochan Output</span>
+                        </label>
+                        <div class="panel-actions">
+                            <button id="copyOutput" class="icon-btn small" title="Copy output (Ctrl+Shift+C)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            </button>
+                            <button id="downloadOutputBtn" class="icon-btn small" title="Download output">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="outputText" placeholder="Converted text will appear here…" readonly spellcheck="false"></textarea>
+                </div>
+            </div>
+
+            <!-- Stats bar -->
+            <div class="stats-bar">
+                <div class="stat-group" title="Input statistics">
+                    <span class="stat-label">Input</span>
+                    <span class="stat-item"><strong id="inputChars">0</strong> chars</span>
+                    <span class="stat-item"><strong id="inputWords">0</strong> words</span>
+                    <span class="stat-item"><strong id="inputLines">0</strong> lines</span>
+                </div>
+                <div class="stat-divider" aria-hidden="true"></div>
+                <div class="stat-group" title="Output statistics">
+                    <span class="stat-label">Output</span>
+                    <span class="stat-item"><strong id="outputChars">0</strong> chars</span>
+                    <span class="stat-item"><strong id="outputWords">0</strong> words</span>
+                    <span class="stat-item"><strong id="outputReadtime">0m</strong> read</span>
+                </div>
+            </div>
+
+            <!-- Action row -->
+            <div class="actions">
+                <button id="swapBtn" class="action-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+                    <span>Swap Input ↔ Output</span>
+                </button>
+                <a href="TRILOCHA.TTF" download class="action-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    <span>Download Font (TRILOCHA.TTF)</span>
+                </a>
+            </div>
+        </main>
+
+        <!-- ─── Preview panel (3-column: image | OCR text | converted) ─── -->
+        <div id="previewPanel" class="preview-panel" hidden>
+            <div class="preview-header">
+                <h3>🔍 OCR Preview</h3>
+                <button id="closePreviewBtn" class="icon-btn" title="Close preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="preview-columns">
+                <div class="preview-column">
+                    <div class="preview-label">Original Image</div>
+                    <div id="previewImage" class="preview-image-container">
+                        <div class="preview-placeholder">No image loaded</div>
+                    </div>
+                </div>
+                <div class="preview-column">
+                    <div class="preview-label">OCR Text (editable)</div>
+                    <textarea id="ocrText" class="preview-textarea" placeholder="OCR text will appear here…" spellcheck="true"></textarea>
+                </div>
+                <div class="preview-column">
+                    <div class="preview-label">Converted Text</div>
+                    <textarea id="previewConverted" class="preview-textarea" readonly placeholder="Converted text…"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Progress modal ─── -->
+        <div id="progressModal" class="modal" hidden role="dialog" aria-labelledby="progressTitle">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2 id="progressTitle">Processing…</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="progress-bar-container">
+                        <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="progress-text">Initializing…</p>
+                    <p id="progressPage" class="progress-page"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Info cards ─── -->
+        <section class="info-section" aria-label="Features">
+            <div class="info-card">
+                <div class="info-icon">⚡</div>
+                <h3>Instant Conversion</h3>
+                <p>Real-time conversion as you type. No word limits, no waiting.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🔒</div>
+                <h3>100% Private</h3>
+                <p>Everything runs in your browser. Your text never leaves your device.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">📦</div>
+                <h3>Works Offline</h3>
+                <p>Save the page and use it without internet. Lightweight and fast.</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">🎯</div>
+                <h3>Accurate</h3>
+                <p>Built around the actual TeraFont Trilochan keyboard layout with 120+ verified word tests.</p>
+            </div>
+        </section>
+
+        <!-- ─── Footer ─── -->
+        <footer class="footer">
+            <p>Built with ❤️ for the Gujarati community · Open-source · No data collected</p>
+            <p class="tech-note">TeraFont Trilochan font bundled · Works in all modern browsers</p>
+        </footer>
+    </div>
+
+    <!-- ─── Keyboard Shortcuts Modal ─── -->
+    <div id="shortcutsModal" class="modal" hidden role="dialog" aria-labelledby="shortcutsTitle">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shortcutsTitle">Keyboard Shortcuts</h2>
+                <button class="icon-btn close-modal" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span><span>Convert</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>O</kbd></span><span>Upload .txt file</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>S</kbd></span><span>Download output</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>P</kbd></span><span>Print</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>F</kbd></span><span>Find &amp; Replace</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd></span><span>Copy output</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>K</kbd></span><span>Swap input ↔ output</span></div>
+                <div class="shortcut-row"><span><kbd>Ctrl</kbd> + <kbd>/</kbd></span><span>Toggle theme</span></div>
+                <div class="shortcut-row"><span><kbd>Esc</kbd></span><span>Clear / Close dialog</span></div>
+                <div class="shortcut-row"><span><kbd>?</kbd></span><span>Show this dialog</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Toast notification ─── -->
+    <div id="toast" class="toast" role="status" aria-live="polite">
+        <span class="toast-icon" aria-hidden="true"></span>
+        <span class="toast-message"></span>
+    </div>
+
+    <script src="converter.js"></script>
+    <script src="ocr.js"></script>
+</body>
+</html>

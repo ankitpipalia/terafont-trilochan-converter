@@ -1,0 +1,9 @@
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./tests:/app/tests
+      - ./app:/app/app
+    command: pytest tests/test_converter.py -v --tb=short

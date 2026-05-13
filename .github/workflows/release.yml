@@ -1,0 +1,95 @@
+name: Release (Windows build)
+
+on:
+  push:
+    tags:
+      - "v*"        # e.g. v0.1.0, v1.2.3
+  workflow_dispatch: # allow manual runs from the Actions tab
+
+permissions:
+  contents: write   # to create a Release and upload assets
+
+jobs:
+  build-slim:
+    name: Build slim Windows installer (no OCR)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-slim.txt
+          pip install pyinstaller
+
+      - name: Run tests (sanity check before building)
+        run: pytest -v --tb=short
+
+      - name: Build with PyInstaller
+        run: pyinstaller build/pyinstaller-slim.spec --noconfirm
+
+      - name: Package portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/GujaratiConverter/* -DestinationPath dist/GujaratiConverter-portable-${{ github.ref_name }}.zip
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress --yes
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ github.ref_name }} build/installer-slim.iss
+
+      - name: List build artifacts
+        run: dir dist
+
+      - name: Upload artifacts (workflow_dispatch / inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: GujaratiConverter-slim
+          path: |
+            dist/*Setup*.exe
+            dist/*portable*.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Gujarati Converter ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## Gujarati Font Converter ${{ github.ref_name }}
+
+            Convert Gujarati text between **Unicode** and **TeraFont Trilochan**.
+
+            ### Downloads
+
+            | File | Size | Description |
+            |------|------|-------------|
+            | `GujaratiConverterSetup.exe` | ~80 MB | Slim installer — conversion only, no OCR |
+            | `GujaratiConverter-portable-${{ github.ref_name }}.zip` | ~80 MB | Portable — extract & run, no installation |
+
+            > **First-time Windows users:** SmartScreen may warn "Windows protected your PC" because this build is not code-signed. Click **More info → Run anyway**. The app runs entirely on your machine — no data is sent anywhere.
+
+            ### Install
+            1. Download `GujaratiConverterSetup.exe`
+            2. Double-click → Next → Next → Finish
+            3. Launch from Start Menu
+
+            ### Portable use
+            1. Download the `.zip`
+            2. Extract anywhere (Desktop, USB drive, etc.)
+            3. Run `GujaratiConverter.exe`
+          files: |
+            dist/*Setup*.exe
+            dist/*portable*.zip

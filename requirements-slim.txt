@@ -1,0 +1,7 @@
+# Slim requirements — desktop app without OCR.
+# Produces a ~80 MB installer. Use this for the first release.
+# OCR / PDF features will show a friendly "not available" message.
+#
+# To upgrade to the full build (with OCR), use requirements.txt instead.
+
+pywebview>=5.0,<6
