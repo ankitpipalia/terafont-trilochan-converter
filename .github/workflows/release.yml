@@ -220,7 +220,22 @@ jobs:
             > SmartScreen may show "Windows protected your PC" the first time — click **More info → Run anyway**. The app is unsigned but runs entirely on your machine.
 
             ### Run (macOS)
-            Right-click → Open the first time (Gatekeeper warning is unavoidable without a paid Apple Developer cert).
+
+            Because the build is unsigned, macOS Gatekeeper will block the
+            embedded Python dylib with:
+
+            > library load disallowed by system policy
+
+            Strip the quarantine flag once, then it'll launch normally:
+
+            ```bash
+            unzip GujaratiConverter-macos-*.zip
+            xattr -dr com.apple.quarantine GujaratiConverter/
+            ./GujaratiConverter/GujaratiConverter
+            ```
+
+            (One-time per download. Real fix requires a paid Apple Developer
+            cert for code-signing + notarization — skipped on a free project.)
 
             ### Run (Linux)
             ```bash

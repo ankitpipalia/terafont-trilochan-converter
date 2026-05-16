@@ -32,7 +32,7 @@ Grab the latest from **[Releases](../../releases)**:
 |----------|------|------------|
 | **Windows** | `GujaratiConverterSetup.exe` | Installer — recommended |
 | **Windows** | `GujaratiConverter-windows-*.zip` | Portable — extract anywhere, run the `.exe` |
-| **macOS** | `GujaratiConverter-macos-*.zip` | Extract → right-click → Open the first time |
+| **macOS** | `GujaratiConverter-macos-*.zip` | Unsigned — see macOS workaround below |
 | **Linux** | `GujaratiConverter-linux-*.tar.gz` | Requires GTK 3 + WebKit2; extract and run |
 
 **Install (Windows):**
@@ -40,7 +40,17 @@ Grab the latest from **[Releases](../../releases)**:
 2. Double-click → "Next → Next → Finish".
 3. Launch from Start Menu or Desktop shortcut.
 
-> **SmartScreen warning:** the build is unsigned (signing costs ~$200/yr — skipped for a free project). Click **More info → Run anyway**. The app runs entirely on your machine — no data is sent anywhere.
+> **Windows SmartScreen warning:** the build is unsigned (signing costs ~$200/yr — skipped for a free project). Click **More info → Run anyway**. The app runs entirely on your machine — no data is sent anywhere.
+
+**macOS users:** the build is unsigned, so Gatekeeper blocks the embedded Python dylib with *"library load disallowed by system policy"*. Strip the quarantine attribute once:
+
+```bash
+unzip GujaratiConverter-macos-*.zip
+xattr -dr com.apple.quarantine GujaratiConverter/
+./GujaratiConverter/GujaratiConverter
+```
+
+(Real fix requires a paid Apple Developer cert — skipped on a free project.)
 
 ---
 

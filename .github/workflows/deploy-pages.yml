@@ -33,6 +33,11 @@ jobs:
           HTML
 
       - uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages on the repo if not already on. Avoids the
+          # "Get Pages site failed — Not Found" error you'd otherwise hit
+          # on the first run before flipping the toggle in repo settings.
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
