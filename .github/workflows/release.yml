@@ -27,18 +27,39 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-slim.txt
-          pip install pyinstaller
+          pip install -r requirements-dev.txt
 
       - name: Run tests (sanity check before building)
         run: pytest -v --tb=short
 
       - name: Build with PyInstaller
-        run: pyinstaller build/pyinstaller-slim.spec --noconfirm
+        run: |
+          pyinstaller build/pyinstaller-slim.spec --noconfirm `
+            --workpath build/_work `
+            --distpath dist
+
+      - name: Compute version (strip leading 'v')
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if (-not $tag -or $tag -eq "main") { $tag = "0.0.0-dev" }
+          $version = $tag -replace '^v',''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "Resolved version: $version"
+
+      - name: List PyInstaller output
+        shell: pwsh
+        run: |
+          Write-Host "=== dist/ ==="
+          if (Test-Path dist) { Get-ChildItem -Recurse dist | Select-Object FullName, Length }
 
       - name: Package portable ZIP
         shell: pwsh
         run: |
-          Compress-Archive -Path dist/GujaratiConverter/* -DestinationPath dist/GujaratiConverter-portable-${{ github.ref_name }}.zip
+          $zipName = "dist/GujaratiConverter-portable-v${{ steps.ver.outputs.version }}.zip"
+          Compress-Archive -Path dist/GujaratiConverter/* -DestinationPath $zipName -Force
+          echo "Built: $zipName"
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress --yes
@@ -46,10 +67,11 @@ jobs:
       - name: Build installer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ github.ref_name }} build/installer-slim.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ steps.ver.outputs.version }} build/installer-slim.iss
 
-      - name: List build artifacts
-        run: dir dist
+      - name: List final artifacts
+        shell: pwsh
+        run: Get-ChildItem dist -File | Select-Object Name, Length
 
       - name: Upload artifacts (workflow_dispatch / inspection)
         uses: actions/upload-artifact@v4
