@@ -2,7 +2,7 @@
 
 > Convert Gujarati text between **Unicode** (Shruti / Noto) and **TeraFont Trilochan** — instantly, offline, with optional OCR for scanned images and PDFs.
 
-A modern desktop app (Windows) and standalone web page for the Gujarati legal-document community. Built around the actual TeraFont Trilochan keyboard layout and verified against real legal documents with **120 golden word-level tests** locked in.
+A modern desktop app (**Windows · macOS · Linux**) and standalone web page for the Gujarati legal-document community. Built around the actual TeraFont Trilochan keyboard layout and verified against real legal documents with **133 golden word-level tests** locked in.
 
 ---
 
@@ -12,9 +12,12 @@ A modern desktop app (Windows) and standalone web page for the Gujarati legal-do
 - 📄 **No word limit** — handles full legal documents
 - 🔒 **100 % private** — runs entirely on your computer, nothing uploaded
 - 📦 **Works offline** — once installed, no internet needed
-- 🖼️ **OCR from images** — extract Gujarati text from photos / scans *(full build only)*
-- 📚 **OCR from PDFs** — multi-page documents with text-layer fast-path *(full build only)*
-- 📁 **Batch folder OCR** — point at a folder of images, get all the text *(full build only)*
+- 📝 **DOCX import + export** — open Word documents, save with TeraFont applied
+- 📕 **PDF export** with TeraFont Trilochan embedded
+- 🖼️ **OCR from images** *(full build)* — extract Gujarati text from photos/scans
+- 📚 **OCR from PDFs** *(full build)* — multi-page with text-layer fast-path
+- 📁 **Batch folder OCR** *(full build)* — point at a folder of images
+- ⌨️ **CLI mode** — `gujarati-converter --to-tera input.txt -o output.txt`
 - 🌓 **Dark / light themes** with smooth transitions
 - 🔍 **Find & Replace**, drag-and-drop, keyboard shortcuts, live stats
 - 🎯 **Accurate** — extensive golden-test suite based on actual legal documents
@@ -23,35 +26,55 @@ A modern desktop app (Windows) and standalone web page for the Gujarati legal-do
 
 ## 📥 Download (for end users)
 
-Grab the latest installer from **[Releases](../../releases)**:
+Grab the latest from **[Releases](../../releases)**:
 
-| File | What it is |
-|------|-----------|
-| `GujaratiConverterSetup.exe` | Windows installer (Slim, ~80 MB). Conversion only — no OCR. |
-| `GujaratiConverterSetup-Full.exe` | Windows installer (Full, ~400 MB). Includes OCR engine. |
-| `GujaratiConverter-portable.zip` | Portable version. Extract anywhere, run the `.exe`. No installation needed. |
+| Platform | File | What it is |
+|----------|------|------------|
+| **Windows** | `GujaratiConverterSetup.exe` | Installer — recommended |
+| **Windows** | `GujaratiConverter-windows-*.zip` | Portable — extract anywhere, run the `.exe` |
+| **macOS** | `GujaratiConverter-macos-*.zip` | Extract → right-click → Open the first time |
+| **Linux** | `GujaratiConverter-linux-*.tar.gz` | Requires GTK 3 + WebKit2; extract and run |
 
-**Install:**
+**Install (Windows):**
 1. Download the `.exe`.
 2. Double-click → "Next → Next → Finish".
 3. Launch from Start Menu or Desktop shortcut.
 
-> **Note:** Windows SmartScreen may show "Windows protected your PC" the first time because the app isn't code-signed (signing costs ~$200/yr — skipped for a free project). Click **More info → Run anyway**.
+> **SmartScreen warning:** the build is unsigned (signing costs ~$200/yr — skipped for a free project). Click **More info → Run anyway**. The app runs entirely on your machine — no data is sent anywhere.
 
 ---
 
-## 🚀 Quick start (web version)
+## 🌐 Web version (no install)
 
-Don't want to install anything? The same UI works in any modern browser:
+The same UI is hosted on **GitHub Pages**: see the link in the repo sidebar, or run locally:
 
 ```bash
-git clone https://github.com/<your-user>/gujarati-font-converter.git
-cd gujarati-font-converter/app/ui
+git clone https://github.com/ankitpipalia/terafont-trilochan-converter.git
+cd terafont-trilochan-converter/app/ui
 python3 -m http.server 8080
 # Open http://localhost:8080
 ```
 
-(Conversion works; OCR/PDF do not, because they require the Python backend.)
+Conversion works; OCR/PDF/DOCX *export* don't (they need the Python backend).
+
+---
+
+## ⌨️ CLI mode
+
+The installed `.exe` also works as a command-line tool. Useful for scripting and batch jobs:
+
+```bash
+# Unicode → TeraFont
+gujarati-converter --to-tera input.txt -o output.txt
+gujarati-converter --to-tera --stdin < input.txt > output.txt
+echo "ગુજરાત" | gujarati-converter --to-tera --stdin
+
+# TeraFont → Unicode
+gujarati-converter --to-unicode input.txt -o output.txt
+
+# Version check
+gujarati-converter --version
+```
 
 ---
 
@@ -105,8 +128,10 @@ python -m app.main
 ```bash
 pip install pytest
 pytest -v
-# Expect: 120 passed
+# Expect: 133 passed, 7 xfailed
 ```
+
+The 7 `xfailed` tests document a known limitation: TeraFont → Unicode round-trip is fundamentally lossy (e.g., the letter `h` could be either ASCII `h` or Gujarati `ઝ`). Treat reverse conversion as best-effort, not lossless. See `docs/ARCHITECTURE.md`.
 
 ### Run tests in Docker (no local Python required)
 

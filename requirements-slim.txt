@@ -1,7 +1,9 @@
 # Slim requirements — desktop app without OCR.
-# Produces a ~80 MB installer. Use this for the first release.
-# OCR / PDF features will show a friendly "not available" message.
+# Adds DOCX + PDF export support (~5 MB total).
+# Final installer is ~25 MB. Good for first release.
 #
-# To upgrade to the full build (with OCR), use requirements.txt instead.
+# To add OCR, install requirements.txt instead.
 
 pywebview>=5.0,<6
+python-docx>=1.1,<2
+reportlab>=4.0,<5

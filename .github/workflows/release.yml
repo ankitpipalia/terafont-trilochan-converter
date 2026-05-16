@@ -1,24 +1,26 @@
-name: Release (Windows build)
+name: Release builds
 
 on:
   push:
     tags:
-      - "v*"        # e.g. v0.1.0, v1.2.3
-  workflow_dispatch: # allow manual runs from the Actions tab
+      - "v*"
+  workflow_dispatch:
 
 permissions:
-  contents: write   # to create a Release and upload assets
+  contents: write
 
 jobs:
-  build-slim:
-    name: Build slim Windows installer (no OCR)
+  # ─────────────────────────────────────────────────────────────────
+  # Windows: PyInstaller + Inno Setup → Installer .exe + portable .zip
+  # ─────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows (slim, no OCR)
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
@@ -29,16 +31,13 @@ jobs:
           pip install -r requirements-slim.txt
           pip install -r requirements-dev.txt
 
-      - name: Run tests (sanity check before building)
+      - name: Run tests
         run: pytest -v --tb=short
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller build/pyinstaller-slim.spec --noconfirm `
-            --workpath build/_work `
-            --distpath dist
+        run: pyinstaller build/pyinstaller-slim.spec --noconfirm --workpath build/_work --distpath dist
 
-      - name: Compute version (strip leading 'v')
+      - name: Compute version
         id: ver
         shell: pwsh
         run: |
@@ -46,20 +45,16 @@ jobs:
           if (-not $tag -or $tag -eq "main") { $tag = "0.0.0-dev" }
           $version = $tag -replace '^v',''
           echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "Resolved version: $version"
 
       - name: List PyInstaller output
         shell: pwsh
-        run: |
-          Write-Host "=== dist/ ==="
-          if (Test-Path dist) { Get-ChildItem -Recurse dist | Select-Object FullName, Length }
+        run: if (Test-Path dist) { Get-ChildItem -Recurse dist | Select-Object FullName, Length }
 
       - name: Package portable ZIP
         shell: pwsh
         run: |
-          $zipName = "dist/GujaratiConverter-portable-v${{ steps.ver.outputs.version }}.zip"
+          $zipName = "dist/GujaratiConverter-windows-v${{ steps.ver.outputs.version }}.zip"
           Compress-Archive -Path dist/GujaratiConverter/* -DestinationPath $zipName -Force
-          echo "Built: $zipName"
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress --yes
@@ -69,20 +64,134 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ steps.ver.outputs.version }} build/installer-slim.iss
 
-      - name: List final artifacts
+      - name: Show final artifacts
         shell: pwsh
         run: Get-ChildItem dist -File | Select-Object Name, Length
 
-      - name: Upload artifacts (workflow_dispatch / inspection)
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: GujaratiConverter-slim
+          name: windows-build
           path: |
             dist/*Setup*.exe
-            dist/*portable*.zip
+            dist/GujaratiConverter-windows-*.zip
+
+  # ─────────────────────────────────────────────────────────────────
+  # macOS: app bundle in a .zip (unsigned)
+  # ─────────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS (slim)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-slim.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -v --tb=short
+
+      - name: Build with PyInstaller
+        run: pyinstaller build/pyinstaller-slim.spec --noconfirm --workpath build/_work --distpath dist
+
+      - name: Compute version
+        id: ver
+        run: |
+          tag="${{ github.ref_name }}"
+          if [ -z "$tag" ] || [ "$tag" = "main" ]; then tag="0.0.0-dev"; fi
+          version="${tag#v}"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Package
+        run: |
+          cd dist
+          zip -r9 "GujaratiConverter-macos-v${{ steps.ver.outputs.version }}.zip" GujaratiConverter/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: dist/GujaratiConverter-macos-*.zip
+
+  # ─────────────────────────────────────────────────────────────────
+  # Linux: portable tarball
+  # ─────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Linux (slim)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install system deps for pywebview (GTK)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-webkit2-4.1 \
+            libcairo2-dev pkg-config python3-dev
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-slim.txt
+          pip install -r requirements-dev.txt
+          # pywebview needs PyGObject + pycairo on Linux for GTK backend
+          pip install PyGObject pycairo || true
+
+      - name: Run tests
+        run: pytest -v --tb=short
+
+      - name: Build with PyInstaller
+        run: pyinstaller build/pyinstaller-slim.spec --noconfirm --workpath build/_work --distpath dist
+
+      - name: Compute version
+        id: ver
+        run: |
+          tag="${{ github.ref_name }}"
+          if [ -z "$tag" ] || [ "$tag" = "main" ]; then tag="0.0.0-dev"; fi
+          version="${tag#v}"
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Package
+        run: |
+          cd dist
+          tar -czf "GujaratiConverter-linux-v${{ steps.ver.outputs.version }}.tar.gz" GujaratiConverter/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: dist/GujaratiConverter-linux-*.tar.gz
+
+  # ─────────────────────────────────────────────────────────────────
+  # Publish GitHub Release with all platform artifacts
+  # ─────────────────────────────────────────────────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: find artifacts -type f -exec ls -lh {} \;
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: "Gujarati Converter ${{ github.ref_name }}"
@@ -92,26 +201,40 @@ jobs:
           body: |
             ## Gujarati Font Converter ${{ github.ref_name }}
 
-            Convert Gujarati text between **Unicode** and **TeraFont Trilochan**.
+            Convert Gujarati text between **Unicode** and **TeraFont Trilochan**, with DOCX/PDF export.
 
             ### Downloads
 
-            | File | Size | Description |
-            |------|------|-------------|
-            | `GujaratiConverterSetup.exe` | ~80 MB | Slim installer — conversion only, no OCR |
-            | `GujaratiConverter-portable-${{ github.ref_name }}.zip` | ~80 MB | Portable — extract & run, no installation |
+            | Platform | File | Notes |
+            |----------|------|-------|
+            | Windows | `GujaratiConverterSetup.exe` | Installer (recommended) |
+            | Windows | `GujaratiConverter-windows-*.zip` | Portable — extract & run |
+            | macOS | `GujaratiConverter-macos-*.zip` | Unsigned — see notes below |
+            | Linux | `GujaratiConverter-linux-*.tar.gz` | Requires GTK 3 / WebKit2 |
 
-            > **First-time Windows users:** SmartScreen may warn "Windows protected your PC" because this build is not code-signed. Click **More info → Run anyway**. The app runs entirely on your machine — no data is sent anywhere.
-
-            ### Install
+            ### Install (Windows)
             1. Download `GujaratiConverterSetup.exe`
             2. Double-click → Next → Next → Finish
             3. Launch from Start Menu
 
-            ### Portable use
-            1. Download the `.zip`
-            2. Extract anywhere (Desktop, USB drive, etc.)
-            3. Run `GujaratiConverter.exe`
+            > SmartScreen may show "Windows protected your PC" the first time — click **More info → Run anyway**. The app is unsigned but runs entirely on your machine.
+
+            ### Run (macOS)
+            Right-click → Open the first time (Gatekeeper warning is unavoidable without a paid Apple Developer cert).
+
+            ### Run (Linux)
+            ```bash
+            tar -xzf GujaratiConverter-linux-*.tar.gz
+            cd GujaratiConverter
+            ./GujaratiConverter
+            ```
+
+            ### What's included (slim build)
+            - ✅ Unicode ↔ TeraFont conversion (120 golden tests verified)
+            - ✅ DOCX import + export with TeraFont applied
+            - ✅ PDF export with TeraFont embedded
+            - ✅ Find & Replace · Drag-drop · Keyboard shortcuts · Dark/Light themes
+            - ✅ CLI mode (`GujaratiConverter --to-tera input.txt -o output.txt`)
+            - ❌ OCR (image/PDF) — use the full build instead
           files: |
-            dist/*Setup*.exe
-            dist/*portable*.zip
+            artifacts/**/*

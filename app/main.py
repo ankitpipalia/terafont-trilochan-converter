@@ -53,6 +53,14 @@ def create_window():
 
 
 def main():
+    # CLI mode: if invoked with args (other than --help to launch GUI), run headless.
+    from app.cli import has_cli_args, run as cli_run
+    if has_cli_args():
+        code = cli_run()
+        if code >= 0:
+            sys.exit(code)
+        # code == -1 → no actionable args, fall through to GUI
+
     window = create_window()
     try:
         webview.start()

@@ -57,14 +57,17 @@ unicode_to_tera_map = {
 half_forms = {
     '\u0aac': 'a',     # ba-half: બ્લોક → a,MS
     '\u0a96': 'b',     # kha-half: ખ્વ → bJ
+    '\u0a97': 'u',     # ga-half: જગ્યા → HuIF
     '\u0aad': 'e',     # bha-half: સભ્ય → ;eI
     '\u0a9a': 'r',     # cha-half: સ્વચ્છ → :JrK
     '\u0aa4': 't',     # ta-half: ત્ય → tI
     '\u0aa7': 'w',     # dha-half: શુધ્ધ → X]wW
     '\u0aa8': 'g',     # na-half: ન્ત → gT
     '\u0aaa': '%',     # pa-half: પ્લ → %,
+    '\u0aae': 'd',     # ma-half: મ્યુનિસીપલ → dI]lG;L5,
     '\u0ab2': '<',     # la-half: લ્ક → <S
     '\u0ab5': 'j',     # va-half: વ્ય → jI
+    '\u0ab6': '`',     # sha-half: વિશ્વાસ → lJ`JF;
     '\u0ab7': 'Q',     # ssa-half: ષ્ણ → Q6
     '\u0ab8': ':',     # sa-half: સ્ત → :T
 }

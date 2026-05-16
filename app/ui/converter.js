@@ -603,12 +603,39 @@ function initApp() {
     });
 
     // ───── File upload (button + drag-drop) ──────────────────────────
-    function loadFile(file) {
+    function isDocx(name) { return /\.docx$/i.test(name); }
+
+    async function loadFile(file) {
         if (!file) return;
-        if (file.size > 10 * 1024 * 1024) { // 10 MB safety
-            showToast('File too large (max 10 MB)', 'error');
+        if (file.size > 25 * 1024 * 1024) {
+            showToast('File too large (max 25 MB)', 'error');
             return;
         }
+
+        // DOCX → go through Python API (needs python-docx)
+        if (isDocx(file.name)) {
+            if (!(typeof window.pywebview !== 'undefined' && window.pywebview.api)) {
+                showToast('.docx upload requires the desktop app', 'error');
+                return;
+            }
+            // Pywebview can't pass file content from <input>, so trigger the
+            // native picker via the API instead. (Drop-to-DOCX requires Python access.)
+            try {
+                const path = await window.pywebview.api.pick_document();
+                if (!path) return;
+                const res = await window.pywebview.api.read_docx(path);
+                if (res.error) { showToast(`Open failed: ${res.error}`, 'error'); return; }
+                inputText.value = res.text;
+                if (currentMode === 'auto') setMode('auto', { skipConvert: true });
+                doConvert();
+                showToast(`Loaded ${file.name}`, 'success');
+            } catch (err) {
+                showToast(`Open failed: ${err}`, 'error');
+            }
+            return;
+        }
+
+        // Plain text fast path
         const reader = new FileReader();
         reader.onload = (e) => {
             inputText.value = e.target.result;
@@ -620,7 +647,31 @@ function initApp() {
         reader.readAsText(file);
     }
 
-    uploadBtn.addEventListener('click', () => fileInput.click());
+    uploadBtn.addEventListener('click', async () => {
+        // In desktop mode prefer the native picker so DOCX works
+        if (typeof window.pywebview !== 'undefined' && window.pywebview.api) {
+            try {
+                const path = await window.pywebview.api.pick_document();
+                if (!path) return;
+                if (isDocx(path)) {
+                    const res = await window.pywebview.api.read_docx(path);
+                    if (res.error) { showToast(`Open failed: ${res.error}`, 'error'); return; }
+                    inputText.value = res.text;
+                } else {
+                    const res = await window.pywebview.api.read_text_file(path);
+                    if (res.error) { showToast(`Open failed: ${res.error}`, 'error'); return; }
+                    inputText.value = res.text;
+                }
+                if (currentMode === 'auto') setMode('auto', { skipConvert: true });
+                doConvert();
+                showToast(`Loaded ${path.split(/[\\/]/).pop()}`, 'success');
+            } catch (err) {
+                showToast(`Open failed: ${err}`, 'error');
+            }
+        } else {
+            fileInput.click();  // browser fallback
+        }
+    });
     fileInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
 
     // Drag-drop on input panel
@@ -653,6 +704,48 @@ function initApp() {
 
     downloadTxtBtn.addEventListener('click', downloadOutput);
     downloadOutputBtn.addEventListener('click', downloadOutput);
+
+    // ───── Export as DOCX / PDF ──────────────────────────────────────
+    const exportDocxBtn = $('exportDocxBtn');
+    const exportPdfBtn = $('exportPdfBtn');
+
+    function hasApi() { return typeof window.pywebview !== 'undefined' && window.pywebview.api; }
+
+    async function exportAs(format) {
+        if (!outputText.value.trim()) { showToast('Nothing to export', 'error'); return; }
+        if (!hasApi()) {
+            showToast(`${format.toUpperCase()} export requires the desktop app`, 'error');
+            return;
+        }
+        const ts = new Date().toISOString().slice(0, 10);
+        const filename = `gujarati-${ts}.${format}`;
+        const fn = format === 'docx'
+            ? window.pywebview.api.export_docx
+            : window.pywebview.api.export_pdf;
+        try {
+            const res = await fn(outputText.value, filename);
+            if (res && res.error) {
+                showToast(`Export failed: ${res.error}`, 'error');
+            } else if (res && res.path) {
+                showToast(`Saved ${res.path.split(/[\\/]/).pop()}`, 'success');
+            }
+        } catch (err) {
+            showToast(`Export failed: ${err}`, 'error');
+        }
+    }
+
+    if (exportDocxBtn) exportDocxBtn.addEventListener('click', () => exportAs('docx'));
+    if (exportPdfBtn)  exportPdfBtn.addEventListener('click',  () => exportAs('pdf'));
+
+    // Hide export buttons that aren't available in this build
+    setTimeout(async () => {
+        if (!hasApi()) return; // browser mode — leave both buttons visible (they'll error gracefully)
+        try {
+            const caps = await window.pywebview.api.doc_capabilities();
+            if (exportDocxBtn && !caps.docx) exportDocxBtn.style.display = 'none';
+            if (exportPdfBtn  && !caps.pdf)  exportPdfBtn.style.display = 'none';
+        } catch {}
+    }, 300);
 
     // ───── Print ─────────────────────────────────────────────────────
     printBtn.addEventListener('click', () => window.print());

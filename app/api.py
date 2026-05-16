@@ -128,38 +128,145 @@ class API:
         return paths[0] if paths else None
 
     def save_text(self, content, filename):
-        """Save text content to a file. Returns the saved path or None."""
+        """Save text to a file via Save dialog. Returns {path, error?}."""
         from webview import create_file_dialog, SAVE_DIALOG
-        paths = create_file_dialog(SAVE_DIALOG, save_filename=filename)
-        if paths:
+        try:
+            paths = create_file_dialog(SAVE_DIALOG, save_filename=filename)
+            if not paths:
+                return {"path": None}
             path = paths[0]
             with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-            return path
-        return None
+                f.write(content or "")
+            from app import settings as _settings
+            _settings.add_recent_file(path)
+            return {"path": path}
+        except OSError as e:
+            logger.error("save_text failed: %s", e)
+            return {"path": None, "error": str(e)}
+
+    def read_text_file(self, path):
+        """Read a UTF-8 text file. Returns {text, error?}."""
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                text = f.read()
+            from app import settings as _settings
+            _settings.add_recent_file(path)
+            return {"text": text}
+        except (OSError, UnicodeDecodeError) as e:
+            return {"text": "", "error": str(e)}
+
+    # ── Document I/O (DOCX, PDF) ────────────────────────────────────────
+
+    def pick_document(self):
+        """Pick a .docx, .pdf, .txt, or image file. Returns path or None."""
+        from webview import create_file_dialog, OPEN_DIALOG
+        paths = create_file_dialog(OPEN_DIALOG, file_types=(
+            "All supported (*.txt;*.docx;*.pdf;*.png;*.jpg;*.jpeg)",
+            "Text files (*.txt)",
+            "Word documents (*.docx)",
+            "PDF files (*.pdf)",
+            "Images (*.png;*.jpg;*.jpeg;*.tiff;*.bmp)",
+        ))
+        return paths[0] if paths else None
+
+    def read_docx(self, path):
+        """Extract Gujarati text from a .docx file. Returns {text, error?}."""
+        from app import docs
+        if not docs.docx_available():
+            return {"text": "", "error": "DOCX support not installed (pip install python-docx)"}
+        if not path or not os.path.exists(path):
+            return {"text": "", "error": "File not found"}
+        try:
+            text = docs.read_docx(path)
+            from app import settings as _settings
+            _settings.add_recent_file(path)
+            return {"text": text}
+        except Exception as e:
+            logger.error("read_docx failed: %s", e)
+            return {"text": "", "error": str(e)}
+
+    def export_docx(self, content, filename="output.docx"):
+        """Export `content` as a .docx with TeraFont font applied.
+        Returns {path, error?}."""
+        from webview import create_file_dialog, SAVE_DIALOG
+        from app import docs
+        if not docs.docx_available():
+            return {"path": None, "error": "DOCX support not installed"}
+        try:
+            paths = create_file_dialog(SAVE_DIALOG, save_filename=filename,
+                                       file_types=("Word documents (*.docx)",))
+            if not paths:
+                return {"path": None}
+            out_path = paths[0]
+            if not out_path.lower().endswith(".docx"):
+                out_path += ".docx"
+            docs.write_docx(out_path, content or "")
+            return {"path": out_path}
+        except Exception as e:
+            logger.error("export_docx failed: %s", e)
+            return {"path": None, "error": str(e)}
+
+    def export_pdf(self, content, filename="output.pdf"):
+        """Export `content` as a PDF with TeraFont embedded.
+        Returns {path, error?}."""
+        from webview import create_file_dialog, SAVE_DIALOG
+        from app import docs
+        if not docs.pdf_available():
+            return {"path": None, "error": "PDF support not installed (pip install reportlab)"}
+        try:
+            paths = create_file_dialog(SAVE_DIALOG, save_filename=filename,
+                                       file_types=("PDF files (*.pdf)",))
+            if not paths:
+                return {"path": None}
+            out_path = paths[0]
+            if not out_path.lower().endswith(".pdf"):
+                out_path += ".pdf"
+            docs.write_pdf(out_path, content or "")
+            return {"path": out_path}
+        except Exception as e:
+            logger.error("export_pdf failed: %s", e)
+            return {"path": None, "error": str(e)}
+
+    def doc_capabilities(self):
+        """Return which document formats are available in this build."""
+        from app import docs
+        return {
+            "docx": docs.docx_available(),
+            "pdf": docs.pdf_available(),
+        }
 
     # ── Settings ────────────────────────────────────────────────────────
 
     def get_settings(self):
-        """Return user settings as a dict."""
-        settings_path = _get_settings_path()
-        if os.path.exists(settings_path):
-            with open(settings_path) as f:
-                return json.load(f)
-        return {
-            "engine": "paddle",
-            "dpi": 300,
-            "theme": "dark",
-            "last_folder": None,
-            "ocr_enabled": True,
-        }
+        """Return validated user settings."""
+        from app import settings as _settings
+        return _settings.load()
 
     def set_settings(self, settings):
-        """Persist user settings to disk."""
-        settings_path = _get_settings_path()
-        os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-        with open(settings_path, "w") as f:
-            json.dump(settings, f)
+        """Persist (validated) user settings to disk."""
+        from app import settings as _settings
+        _settings.save(settings or {})
+        return _settings.load()
+
+    def reset_settings(self):
+        """Restore default settings and return them."""
+        from app import settings as _settings
+        return _settings.reset()
+
+    def get_recent_files(self):
+        """Return the recent-files list (most recent first)."""
+        from app import settings as _settings
+        return _settings.load().get("recent_files", [])
+
+    def get_log_dir(self):
+        """Return the directory containing log files (for support)."""
+        from app import log_dir
+        return log_dir()
+
+    def get_version(self):
+        """Return the app version string."""
+        from app import __version__
+        return __version__
 
     # ── OCR ─────────────────────────────────────────────────────────────
 
@@ -261,10 +368,3 @@ class API:
         return self._get_engine() is not None
 
 
-def _get_settings_path():
-    """Get the settings file path using platform-appropriate convention."""
-    if sys.platform == "win32":
-        base = os.environ.get("APPDATA") or os.path.expanduser("~")
-    else:
-        base = os.path.expanduser("~")
-    return os.path.join(base, "GujaratiConverter", "settings.json")

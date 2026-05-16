@@ -1,23 +1,25 @@
-# ── Core ──────────────────────────────────────────────────────────────
+# Full build — everything: conversion, DOCX/PDF I/O, OCR.
+
+# ── Core UI shell ────────────────────────────────────────────────────
 pywebview>=5.0,<6
 
-# ── OCR Engine ───────────────────────────────────────────────────────
+# ── Document formats ────────────────────────────────────────────────
+python-docx>=1.1,<2
+reportlab>=4.0,<5
+
+# ── OCR Engine (primary) ─────────────────────────────────────────────
 paddleocr>=2.7,<3
 paddlepaddle>=2.6,<3
 opencv-python-headless>=4.8,<5
 Pillow>=10,<11
 
-# ── PDF ──────────────────────────────────────────────────────────────
+# ── PDF rendering ────────────────────────────────────────────────────
 PyMuPDF>=1.24,<2
 
-# ── OCR Fallback ─────────────────────────────────────────────────────
+# ── OCR fallback ─────────────────────────────────────────────────────
 pytesseract>=0.3,<1
 
-# ── Utilities ────────────────────────────────────────────────────────
-numpy>=1.24,<2  # PaddleOCR compatibility — numpy 2.x breaks it
-shapely>=1.8,<2  # Used by PaddleOCR
-imgaug>=0.4,<1   # Used by PaddleOCR
-
-# ── Dev ──────────────────────────────────────────────────────────────
-pytest>=7.0
-pyinstaller>=6.0
+# ── PaddleOCR transitive deps (pinned for reproducibility) ───────────
+numpy>=1.24,<2   # PaddleOCR doesn't support NumPy 2.x
+shapely>=1.8,<3
+imgaug>=0.4,<1

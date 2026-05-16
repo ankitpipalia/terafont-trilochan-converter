@@ -239,6 +239,17 @@
         if (previewBtn) previewBtn.addEventListener("click", togglePreviewPanel);
         if (closePreviewBtn) closePreviewBtn.addEventListener("click", hidePreviewPanel);
 
+        // Hide desktop-only buttons in browser-only mode (no pywebview API).
+        // We wait a tick because pywebview attaches `api` shortly after load.
+        setTimeout(function () {
+            if (!hasApi()) {
+                ["ocrImageBtn", "ocrPdfBtn", "ocrFolderBtn", "previewBtn"].forEach(function (id) {
+                    var el = $(id);
+                    if (el) el.style.display = "none";
+                });
+            }
+        }, 250);
+
         // OCR text edit → debounce → auto-convert
         var ocrText = $("ocrText");
         if (ocrText) {

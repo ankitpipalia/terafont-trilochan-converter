@@ -148,17 +148,17 @@ TEST_CASES = [
     tc("રજીસ્ટ્રેશન", "ZÒ:8=[XG"),
 
     # ─── New mappings ─────────────────────────────────────────────────
-    tc("જગ્યા", "HUIF"),
-    tc("જગ્યામાં", "HUIFDF\\"),
+    tc("જગ્યા", "HuIF", note="ga-half = u"),
+    tc("જગ્યામાં", "HuIFDF\\", note="ga-half = u"),
     tc("ઉષાબેન", "pQFFA[G"),
     tc("વર્ષમાં", 'JQF"DF\\'),
     tc("હર્ષાબેન", 'CQFF"A[G'),
     tc("શૈલેષભાઈ", "X{,[QFEF."),
     tc("દ્રવ્યો", "N|jIM"),
-    tc("વિશ્વાસ", "lJXJF;"),
-    tc("પશ્ચિમે", "5lXRD["),
+    tc("વિશ્વાસ", "lJ`JF;", note="sha-half = backtick"),
+    tc("પશ્ચિમે", "5l`RD[", note="sha-half + short-i before cluster"),
     tc("ઉત્તરે", "ptTZ["),
-    tc("મ્યુનિસીપલ", "DI]lG;L5,"),
+    tc("મ્યુનિસીપલ", "dI]lG;L5,", note="ma-half = d"),
     tc("નક્કી", "GSSL"),
     tc("પૌત્રાદીક", "5F{+FNLS"),
 ]
@@ -182,8 +182,89 @@ def test_reverse_mapping():
     assert convert_tera_to_unicode("VFYL") == "આથી"
 
 
+# ─── Reverse-direction (Tera → Unicode) explicit cases ─────────────────
+# Note: TeraFont encoding is fundamentally lossy (e.g., 'Z' could be ર or ૨)
+# so we only test cases where the round-trip is unambiguous.
+
+REVERSE_CASES = [
+    # Simple consonant sequences (unambiguous reverse mapping)
+    ("VFYL", "આથી"),
+    (";CL", "સહી"),
+    ("U]HZFT", "ગુજરાત"),
+    ("ZFHSM8", "રાજકોટ"),
+    # Ligatures
+    ("1F", "ક્ષ"),
+    ("7", "જ્ઞ"),
+    ("+", "ત્ર"),
+    ("z", "શ્ર"),
+    ("~", "રૂ"),
+    # NOTE: ASCII / English passthrough is NOT tested here because the
+    # reverse converter currently substitutes 'h' → ઝ and similar single
+    # ASCII chars that happen to be valid TeraFont glyphs. See HANDOFF §2.1.
+]
+
+
+@pytest.mark.parametrize("tera,unicode_text", REVERSE_CASES,
+                         ids=lambda x: x[:20] if isinstance(x, str) else "")
+def test_tera_to_unicode(tera, unicode_text):
+    assert convert_tera_to_unicode(tera) == unicode_text
+
+
+# ─── Round-trip tests (lossless cases) ─────────────────────────────────
+# Confirms unicode → tera → unicode is the identity for *simple* inputs.
+
+ROUNDTRIP_LOSSLESS = [
+    "આથી",
+    "સહી",
+    "ગુજરાત",
+]
+
+
+@pytest.mark.parametrize("text", ROUNDTRIP_LOSSLESS, ids=lambda x: x[:20])
+def test_roundtrip_lossless(text):
+    tera = convert_unicode_to_tera(text)
+    back = convert_tera_to_unicode(tera)
+    assert back == text
+
+
+# ─── Known-broken round-trips (documented limitations) ────────────────
+# Reverse conversion is fundamentally lossy:
+#   - 'h' could be ASCII 'h' OR ઝ
+#   - 'Z' could be ર OR ૨
+#   - reph (") doesn't reverse to ર + ્
+#   - half-forms (g, :, <) reverse to the WRONG consonant
+# These tests are kept as documentation; remove xfail when reverse-converter
+# is fixed (see HANDOFF §2.1).
+
+ROUNDTRIP_KNOWN_BROKEN = [
+    "નિવૃત",
+    "ધર્મે",
+    "જગ્યા",
+    "વિશ્વાસ",
+    "પ્રતિજ્ઞાપુર્વક",
+    "hello world",
+    "Mixed: ગુજરાત and English",
+]
+
+
+@pytest.mark.xfail(reason="Reverse converter is lossy — see HANDOFF.md §2.1",
+                   strict=True)
+@pytest.mark.parametrize("text", ROUNDTRIP_KNOWN_BROKEN, ids=lambda x: x[:20])
+def test_roundtrip_known_broken(text):
+    tera = convert_unicode_to_tera(text)
+    back = convert_tera_to_unicode(tera)
+    assert back == text
+
+
 def test_empty_input():
     assert convert_unicode_to_tera("") == ""
     assert convert_unicode_to_tera(None) == ""
     assert convert_tera_to_unicode("") == ""
     assert convert_tera_to_unicode(None) == ""
+
+
+def test_settings_defaults_are_valid():
+    """Make sure the default settings actually round-trip through validation."""
+    from app import settings
+    loaded = settings._coerce(settings.DEFAULT_SETTINGS)
+    assert loaded == settings.DEFAULT_SETTINGS
