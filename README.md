@@ -151,14 +151,40 @@ docker compose run --rm test
 
 ---
 
-## 🏗 Building Windows installers
+## 🚢 Cutting a release
 
-The recommended path is **GitHub Actions** — push a tag, the workflow builds installers on a Windows runner, and attaches them to a GitHub Release:
+Releases are **fully automated**. GitHub Actions watches `pyproject.toml` — bump the version, push, and a complete cross-platform release is built and published:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
-# → check the Actions tab, then Releases
+# 1. Bump the version in pyproject.toml (e.g., 0.1.0 → 0.2.0)
+vim pyproject.toml
+
+# 2. Commit + push to main
+git commit -am "release: v0.2.0"
+git push origin main
+```
+
+What happens next, end-to-end (~3–4 minutes):
+
+| Step | Where |
+|------|-------|
+| `check-version` reads `pyproject.toml`, sees `v0.2.0` is a new tag | Ubuntu runner |
+| Parallel builds: Windows installer + .zip, macOS .zip, Linux .tar.gz | 3 runners |
+| Tests run on every platform (must stay green) | each runner |
+| Release `v0.2.0` is published with all 4 artifacts attached | GitHub |
+| Tag `v0.2.0` is created automatically pointing at your commit | GitHub |
+
+**No release wanted?** If the version is the same as the latest tag, the workflow short-circuits at `check-version` and skips all build jobs. So docs-only commits and refactors are free.
+
+### Manual / fallback ways to trigger a release
+
+```bash
+# Force a build at the current pyproject.toml version, even if tag exists
+gh workflow run release.yml -f force_release=true
+
+# Or push a tag explicitly (e.g., for hotfix from a previous commit)
+git tag v0.2.1 <sha>
+git push origin v0.2.1
 ```
 
 ### Building locally on Windows (advanced)
