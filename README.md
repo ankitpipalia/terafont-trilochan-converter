@@ -56,16 +56,18 @@ xattr -dr com.apple.quarantine GujaratiConverter/
 
 ## 🌐 Web version (no install)
 
-The same UI is hosted on **GitHub Pages**: see the link in the repo sidebar, or run locally:
+The same UI is hosted on **GitHub Pages** at https://ankitpipalia.github.io/terafont-trilochan-converter/ — conversion works in any modern browser. OCR / PDF / DOCX features require either the desktop app or a self-hosted backend (see below).
+
+Want all features available in a browser?
+
+## 🐳 Self-host with Docker (full features for a team / office)
 
 ```bash
-git clone https://github.com/ankitpipalia/terafont-trilochan-converter.git
-cd terafont-trilochan-converter/app/ui
-python3 -m http.server 8080
-# Open http://localhost:8080
+docker compose -f docker-compose.prod.yml up -d
+# → visit http://localhost:8000 — OCR, DOCX/PDF export, conversion, the works
 ```
 
-Conversion works; OCR/PDF/DOCX *export* don't (they need the Python backend).
+Full guide including HTTPS, reverse proxies, Kubernetes probes, and security checklist: **[`Deployment.md`](Deployment.md)**.
 
 ---
 

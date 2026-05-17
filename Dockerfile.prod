@@ -1,0 +1,65 @@
+# Production image — full build with OCR, DOCX, PDF, FastAPI server.
+#
+# Build:  docker build -f Dockerfile.prod -t gujarati-converter:latest .
+# Run:    docker run --rm -p 8000:8000 gujarati-converter:latest
+# Compose: docker compose -f docker-compose.prod.yml up -d
+#
+# Image size: ~1.2 GB (PaddleOCR + paddlepaddle dominate).
+# First-request OCR has a ~10s init delay; subsequent calls are fast.
+
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# System deps:
+#   - tesseract-ocr + guj.traineddata for the OCR fallback engine
+#   - libgl1 + libglib2.0 for opencv-python-headless / paddleocr
+#   - libgomp1 for paddleocr's OpenMP
+#   - poppler-utils useful for PDF tooling (optional but small)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-guj \
+        libgl1 \
+        libglib2.0-0 \
+        libgomp1 \
+        libsm6 \
+        libxext6 \
+        poppler-utils \
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python deps in a layer that caches well
+COPY requirements.txt ./
+RUN pip install -r requirements.txt \
+    && pip install "fastapi>=0.110,<1" "uvicorn[standard]>=0.27,<1"
+
+# Copy the app source
+COPY app/ ./app/
+COPY pyproject.toml README.md ./
+
+# Non-root user for safer deployment
+RUN useradd --create-home --shell /bin/bash app \
+    && mkdir -p /home/app/.paddleocr \
+    && chown -R app:app /app /home/app
+USER app
+ENV HOME=/home/app
+
+EXPOSE 8000
+
+# Healthcheck — Docker / Kubernetes can use it for liveness probes
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD curl -fsS http://localhost:8000/api/health || exit 1
+
+# Two workers is the sweet spot — PaddleOCR pins a lot of RAM per process,
+# so don't go higher than your host can afford. Set UVICORN_WORKERS in env
+# to override.
+ENV UVICORN_WORKERS=2
+
+CMD ["sh", "-c", "uvicorn app.server:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS}"]

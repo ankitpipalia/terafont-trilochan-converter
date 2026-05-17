@@ -1,0 +1,37 @@
+# Production compose file — full self-hosted deployment.
+#
+# Quick start:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Then visit http://localhost:8000 (or whatever PORT you set).
+#
+# For HTTPS / public access, put a reverse proxy (Caddy / nginx / Traefik)
+# in front of this. See Deployment.md for examples.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: gujarati-converter:latest
+    container_name: gujarati-converter
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-2}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-}
+    volumes:
+      # PaddleOCR caches model weights on first run. Persist so we
+      # don't re-download on every container restart.
+      - paddle-cache:/home/app/.paddleocr
+      # Optional: persist user-uploaded files / logs if you mount them
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  paddle-cache:

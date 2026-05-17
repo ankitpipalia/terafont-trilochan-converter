@@ -3,6 +3,12 @@
 # ── Core UI shell ────────────────────────────────────────────────────
 pywebview>=5.0,<6
 
+# ── HTTP server (for self-hosted Docker deployments — see Deployment.md)
+# Not used by the desktop app; safe to omit if you only need the desktop build.
+fastapi>=0.110,<1
+uvicorn[standard]>=0.27,<1
+python-multipart>=0.0.9,<1  # FastAPI uses it for file uploads
+
 # ── Document formats ────────────────────────────────────────────────
 python-docx>=1.1,<2
 reportlab>=4.0,<5
